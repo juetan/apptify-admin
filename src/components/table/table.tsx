@@ -5,8 +5,12 @@ import {
   Divider,
 } from "@arco-design/web-vue";
 import { PropType, computed, defineComponent, reactive, ref, watch } from "vue";
-import { Form, FormModal, FormModalInstance, FormModalProps, FormProps } from "../form";
+import { Form, FormInstance, FormModal, FormModalInstance, FormModalProps, FormProps } from "../form";
 
+/**
+ * 表格组件
+ * @see src/components/table/table.tsx
+ */
 export const Table = defineComponent({
   name: "Table",
   props: {
@@ -14,13 +18,9 @@ export const Table = defineComponent({
      * 表格数据
      */
     data: {
-      type: Array as PropType<BaseData[]>,
-    },
-    /**
-     * 获取数据的函数
-     */
-    api: {
-      type: Function as PropType<(model: Record<string, any>, paging: { page: number; size: number }) => Promise<any>>,
+      type: [Array, Function] as PropType<
+        BaseData[] | ((search: Record<string, any>, paging: { page: number; size: number }) => Promise<any>)
+      >,
     },
     /**
      * 表格列设置
@@ -43,12 +43,6 @@ export const Table = defineComponent({
       type: Object as PropType<FormProps>,
     },
     /**
-     * 传递给 Table 组件的属性
-     */
-    tableProps: {
-      type: Object as PropType<InstanceType<typeof BaseTable>["$props"]>,
-    },
-    /**
      * 新建弹窗配置
      */
     create: {
@@ -66,19 +60,22 @@ export const Table = defineComponent({
     detail: {
       type: Object as PropType<any>,
     },
+    /**
+     * 传递给 Table 组件的属性
+     */
+    tableProps: {
+      type: Object as PropType<InstanceType<typeof BaseTable>["$props"]>,
+    },
   },
   setup(props) {
     const loading = ref(false);
+    const searchRef = ref<FormInstance>();
     const createRef = ref<FormModalInstance>();
     const modifyRef = ref<FormModalInstance>();
     const renderData = ref<BaseData[]>([]);
     const inlineSearch = computed(() => (props.search?.items?.length || 0) < 4);
 
-    const instance = getCurrentInstance();
-
-    Object.assign(props.columns, { getInstance: () => instance });
-
-    console.log("current instane: ", getCurrentInstance());
+    Object.assign(props.columns, { getInstance: () => getCurrentInstance() });
 
     const getPaging = (pagination: Partial<any>) => {
       const { current: page, pageSize: size } = { ...props.pagination, ...pagination } as any;
@@ -86,25 +83,41 @@ export const Table = defineComponent({
     };
 
     const loadData = async (pagination: Partial<any> = {}) => {
-      if (!props.api) {
-        renderData.value =
-          props.data?.filter((item) => {
-            return Object.entries(props.search?.model || {}).every(([key, value]) => {
-              return item[key] === value;
-            });
-          }) || [];
+      if (!props.data) {
+        return;
+      }
+      if (Array.isArray(props.data)) {
+        if (!props.search?.model) {
+          return;
+        }
+        const filters = Object.entries(props.search?.model || {});
+        const data = props.data?.filter((item) => {
+          return filters.every(([key, value]) => {
+            if (typeof value === "string") {
+              return item[key].includes(value);
+            }
+            return item[key] === value;
+          });
+        });
+        renderData.value = data || [];
         props.pagination.total = renderData.value.length;
         props.pagination.current = 1;
         return;
       }
+      if (typeof props.data !== "function") {
+        return;
+      }
+      const model = searchRef.value?.getModel() || {};
       const paging = getPaging(pagination);
       try {
         loading.value = true;
-        const resData = await props.api(props.search?.model || {}, paging);
+        const resData = await props.data(model, paging);
         const { data = [], meta = {} } = resData || {};
         const { page: pageNum, total } = meta;
         renderData.value = data;
         Object.assign(props.pagination, { current: pageNum, total });
+      } catch (error) {
+        console.log("table error", error);
       } finally {
         loading.value = false;
       }
@@ -149,8 +162,9 @@ export const Table = defineComponent({
       loadData();
     });
 
-    return {
+    const state = {
       loading,
+      searchRef,
       createRef,
       modifyRef,
       renderData,
@@ -162,16 +176,18 @@ export const Table = defineComponent({
       onCreateOk,
       onModifyOk,
     };
-  },
-  mounted() {
-    console.log(this);
+
+    provide("ref:table", { ...state, ...props });
+
+    return state;
   },
   render() {
+    (this.columns as any).instance = this;
     return (
       <div class="bh-table w-full">
         {!this.inlineSearch && (
           <div class="">
-            <Form class="grid grid-cols-4 gap-x-4" {...this.search}></Form>
+            <Form ref={(el: any) => (this.searchRef = el)} class="grid grid-cols-4 gap-x-4" {...this.search}></Form>
           </div>
         )}
         {!this.inlineSearch && <Divider class="mt-0 border-gray-200" />}
@@ -194,7 +210,14 @@ export const Table = defineComponent({
             )}
             {this.$slots.action?.()}
           </div>
-          <div>{this.inlineSearch && <Form {...{ ...this.search, formProps: { layout: "inline" } }}></Form>}</div>
+          <div>
+            {this.inlineSearch && (
+              <Form
+                ref={(el: any) => (this.searchRef = el)}
+                {...{ ...this.search, formProps: { layout: "inline" } }}
+              ></Form>
+            )}
+          </div>
         </div>
         <div>
           <BaseTable
@@ -216,5 +239,3 @@ export const Table = defineComponent({
 export type TableInstance = InstanceType<typeof Table>;
 
 export type TableProps = TableInstance["$props"];
-
-export default Table;

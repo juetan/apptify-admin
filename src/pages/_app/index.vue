@@ -21,8 +21,12 @@
         </a-tooltip>
         <a-dropdown>
           <span class="cursor-pointer">
-            <a-avatar :size="28">A</a-avatar>
-            <span class="mx-2">admin</span>
+            <a-avatar :size="28">
+              <img :src="userStore.avatar" :alt="userStore.name">
+            </a-avatar>
+            <span class="mx-2">
+              {{ userStore.name }}
+            </span>
             <i class="icon-park-outline-down"></i>
           </span>
           <template #content>
@@ -58,7 +62,7 @@
             <a-tag class="cursor-pointer">首页</a-tag>
           </div>
         </a-layout-header>
-        <a-layout-content>
+        <a-layout-content class="overflow-x-auto">
           <router-view v-slot="{ Component }">
             <component :is="Component"></component>
           </router-view>
@@ -69,11 +73,12 @@
 </template>
 
 <script lang="ts" setup>
-import { useAppStore } from "@/store";
+import { useAppStore, useUserStore } from "@/store";
 import { Message } from "@arco-design/web-vue";
 import Menu from "./components/menu.vue";
 
 const appStore = useAppStore();
+const userStore = useUserStore();
 const isCollapsed = ref(false);
 const router = useRouter();
 const themeConfig = ref({ visible: false });
@@ -109,9 +114,15 @@ const userButtons = [
   {
     icon: "icon-park-outline-logout",
     text: "退出登录",
-    onClick: () => {
-      Message.success(`提示: 已成功退出登录!`)
-      router.push({ name: "_login" });
+    onClick: async () => {
+      Message.loading({
+        content: '提示: 正在退出，请稍后...',
+        duration: 2000,
+        onClose: () => {
+          Message.success(`提示: 已成功退出登录!`)
+          router.push({ name: "_login" });
+        }
+      })
     },
   },
 ];

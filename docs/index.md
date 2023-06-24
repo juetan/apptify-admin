@@ -3,23 +3,17 @@
 layout: home
 
 hero:
-  name: "使用文档"
+  name: "绝弹博客"
   text: ""
-  tagline: My great project tagline
+  tagline: 一位前端开发者的博客
   actions:
     - theme: brand
-      text: Markdown Examples
+      text: 首页
       link: /markdown-examples
     - theme: alt
-      text: API Examples
+      text: 测试页面
       link: /api-examples
-
-features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  image:
+    src: /assets/td.svg
+    alt: page
 ---
-

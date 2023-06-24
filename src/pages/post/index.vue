@@ -1,8 +1,12 @@
 <template>
-  <div class="m-4 p-4 bg-white">Post Page</div>
+  <div class="m-4 p-4 bg-white">
+    Post Page
+  </div>
 </template>
 
-<script setup lang="tsx" name="PostPage"></script>
+<script setup lang="tsx" name="PostPage">
+
+</script>
 
 <style scoped></style>
 

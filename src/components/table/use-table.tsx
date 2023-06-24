@@ -1,5 +1,4 @@
-import { Button, Link, Message, Modal, TableColumnData } from "@arco-design/web-vue";
-import { IconRefresh, IconSearch } from "@arco-design/web-vue/es/icon";
+import { Link, Message, Modal, TableColumnData } from "@arco-design/web-vue";
 import { defaultsDeep, isArray, isFunction, mergeWith, omit } from "lodash-es";
 import { reactive } from "vue";
 import { TableInstance } from "./table";
@@ -8,17 +7,32 @@ import {
   TABLE_COLUMN_DEFAULTS,
   TABLE_DELTE_DEFAULTS,
   TALBE_INDEX_DEFAULTS,
+  searchItem,
 } from "./table.config";
 import { UseTableOptions } from "./use-interface";
 
+const merge = (...args: any[]) => {
+  return mergeWith({}, ...args, (obj: any, src: any) => {
+    if (Array.isArray(obj) && Array.isArray(src)) {
+      return obj.concat(src);
+    }
+    return undefined;
+  });
+};
+
+const has = (obj: any, key: string) => Object.prototype.hasOwnProperty.call(obj, key);
+
+const propTruly = (obj: any, key: string) => !has(obj, key) || !!obj[key];
+
 /**
  * 提供便捷语法，构建传给Table组件的参数
+ * @see src/components/table/use-table.tsx
  */
 export const useTable = (optionsOrFn: UseTableOptions | (() => UseTableOptions)): any => {
   const options: UseTableOptions = typeof optionsOrFn === "function" ? optionsOrFn() : optionsOrFn;
   const columns: TableColumnData[] = [];
 
-  const getTable = (): TableInstance => (columns as any)?.getInstance?.();
+  const getTable = (): TableInstance => (columns as any).instance;
 
   options.columns.forEach((column) => {
     // 序号
@@ -27,16 +41,13 @@ export const useTable = (optionsOrFn: UseTableOptions | (() => UseTableOptions))
     }
 
     // 操作
-    if (column.type === "buttons" && isArray(column.buttons)) {
+    if (column.type === "button" && isArray(column.buttons)) {
       if (options.detail) {
-        column.buttons.unshift({
-          text: "详情",
-          onClick: (data) => {},
-        });
+        column.buttons.unshift({ text: "详情", onClick: (data) => {} });
       }
 
       if (options.modify) {
-        const modifyAction = column.buttons.find((i) => i.action === "modify");
+        const modifyAction = column.buttons.find((i) => i.type === "modify");
         if (modifyAction) {
           const { onClick } = modifyAction;
           modifyAction.onClick = (columnData) => {
@@ -58,7 +69,7 @@ export const useTable = (optionsOrFn: UseTableOptions | (() => UseTableOptions))
       column.buttons = column.buttons?.map((action) => {
         let onClick = action?.onClick;
 
-        if (action.action === "delete") {
+        if (action.type === "delete") {
           onClick = (data) => {
             Modal.warning({
               ...TABLE_DELTE_DEFAULTS,
@@ -71,7 +82,7 @@ export const useTable = (optionsOrFn: UseTableOptions | (() => UseTableOptions))
           };
         }
 
-        return { ...TABLE_ACTION_DEFAULTS, ...action, onClick };
+        return { ...TABLE_ACTION_DEFAULTS, ...action, onClick } as any;
       });
 
       column.render = (columnData) =>
@@ -93,42 +104,40 @@ export const useTable = (optionsOrFn: UseTableOptions | (() => UseTableOptions))
     columns.push({ ...TABLE_COLUMN_DEFAULTS, ...column });
   });
 
+  const itemsMap = options.common?.items?.reduce((map, item) => {
+    map[item.field] = item;
+    return map;
+  }, {} as any);
+
+  /**
+   * 搜索表单的处理
+   */
   if (options.search && options.search.items) {
-    options.search.items.push({
-      field: "id",
-      type: "custom",
-      itemProps: {
-        class: "table-search-item col-start-4 !mr-0 grid grid-cols-[0_1fr]",
-      },
-      render: () => (
-        <div class="w-full flex gap-x-2 justify-end">
-          {(options.search?.items?.length || 0) > 3 && (
-            <Button disabled={getTable().loading} onClick={() => getTable().reloadData()}>
-              {{ icon: () => <IconRefresh></IconRefresh>, default: () => "重置" }}
-            </Button>
-          )}
-          <Button type="primary" loading={getTable().loading} onClick={() => getTable().loadData()}>
-            {{ icon: () => <IconSearch></IconSearch>, default: () => "查询" }}
-          </Button>
-        </div>
-      ),
-    });
-  }
-
-  const merge = (obj: any, ...args: any[]) =>
-    mergeWith(obj, ...args, (obj: any, src: any) => {
-      if (Array.isArray(obj) && Array.isArray(src)) {
-        return obj.concat(src);
+    const searchItems: any[] = [];
+    options.search.items.forEach((item) => {
+      if (typeof item === "string") {
+        if (!itemsMap[item]) {
+          throw new Error(`search item ${item} not found in common items`);
+        }
+        searchItems.push(itemsMap[item]);
+        return;
       }
-      return undefined;
+      if ("extend" in item && item.extend && itemsMap[item.extend]) {
+        searchItems.push(merge({}, itemsMap[item.extend], item));
+        return;
+      }
+      searchItems.push(item);
     });
-
-  if (options.create) {
-    merge(options.create, options.common);
+    searchItems.push(searchItem);
+    options.search.items = searchItems;
   }
 
-  if (options.modify) {
-    merge(options.modify, options.common);
+  if (options.create && propTruly(options.create, "extend")) {
+    options.create = merge(options.common, options.create);
+  }
+
+  if (options.modify && propTruly(options.modify, "extend")) {
+    options.modify = merge(options.common, options.modify);
   }
 
   return reactive({ ...options, columns });

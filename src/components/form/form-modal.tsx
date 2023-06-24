@@ -13,6 +13,7 @@ export const FormModal = defineComponent({
   props: {
     /**
      * 弹窗标题
+     * @default '新建'
      */
     title: {
       type: [String, Function] as PropType<
@@ -28,7 +29,7 @@ export const FormModal = defineComponent({
       default: true,
     },
     /**
-     * 透传给Modal组件的props
+     * 传递给Modal组件的props
      */
     modalProps: {
       type: Object as PropType<Omit<InstanceType<typeof Modal>["$props"], "visible" | "title" | "onBeforeOk">>,
@@ -48,14 +49,15 @@ export const FormModal = defineComponent({
       required: true,
     },
     /**
-     * 提交函数
+     * 提交表单的函数
+     * @description 可返回`{ message }`类型，用于显示提示信息
      */
     submit: {
-      type: Function as PropType<(arg: { model: Record<string, any>; items: IFormItem[] }) => Promise<any>>,
+      type: Function as PropType<(arg: { model: Record<string, any>; items: IFormItem[] }) => any | Promise<any>>,
       default: () => true,
     },
     /**
-     * 透传给Form组件的props
+     * 传递给Form组件的props
      */
     formProps: {
       type: Object as PropType<Omit<FormInstance["$props"], "model">>,
@@ -86,7 +88,8 @@ export const FormModal = defineComponent({
         return false;
       }
       try {
-        const res = await props.submit?.({ items: props.items, model: props.model });
+        const model = formRef.value?.getModel() || {};
+        const res = await props.submit?.({ items: props.items, model });
         res?.message && Message.success(`提示: ${res.message}`);
         emit("submited", res);
       } catch (error: any) {

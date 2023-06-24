@@ -20,6 +20,10 @@ export type Options = {
   formProps?: Partial<FormInstance["$props"]>;
 };
 
+/**
+ * 构建表单组件的参数
+ * @see src/components/form/use-form.tsx
+ */
 export const useForm = (options: Options) => {
   const { model = { id: undefined } } = options;
   const items: IFormItem[] = [];
@@ -28,19 +32,27 @@ export const useForm = (options: Options) => {
     if (!item.nodeProps) {
       item.nodeProps = {} as any;
     }
+    if (/(.+)\?(.+)/.test(item.field)) {
+      const [field, condition] = item.field.split("?");
+      model[field] = item.initialValue ?? model[item.field];
+      const params = new URLSearchParams(condition);
+      for (const [key, value] of params.entries()) {
+        model[key] = value;
+      }
+    }
     model[item.field] = model[item.field] ?? item.initialValue;
     const _item = { ...item };
     items.push(_item);
   });
 
   if (options.submit) {
-    const footer = items.find((item) => item.type === "submit");
-    if (!footer) {
+    const submit = items.find((item) => item.type === "submit");
+    if (!submit) {
       items.push({
         field: "id",
         type: "submit",
         itemProps: {
-          class: "space-x-2",
+          hideLabel: true,
         },
       });
     }
