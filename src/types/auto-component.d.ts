@@ -36,7 +36,6 @@ declare module '@vue/runtime-core' {
     Page403: typeof import('./../components/error/page-403.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    Table: typeof import('@/components')['Table']
     Toast: typeof import('./../components/toast/toast.vue')['default']
   }
 }

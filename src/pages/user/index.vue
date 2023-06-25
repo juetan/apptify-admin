@@ -5,8 +5,11 @@
 </template>
 
 <script setup lang="tsx">
+import { ContentType, api } from "@/api";
+import { useTable } from "@/components";
+
 const table = useTable({
-  data: async (model, paging) => api.user.selectUsers({ ...paging, ...model }, { toast: "数据加载中，请稍等..." }),
+  data: async (model, paging) => [],
   columns: [
     {
       title: "姓名",

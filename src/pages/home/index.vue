@@ -1,43 +1,20 @@
 <template>
   <div class="m-4 p-4 bg-white">
-    <bh-table v-bind="table"></bh-table>
+    <Table v-bind="table"></Table>
   </div>
 </template>
 
 <script setup lang="tsx">
 import { ContentType, api } from "@/api";
+import { Table, useTable } from "@/components";
 import { dayjs } from "@/plugins";
-import { BhTable, useTable } from "@/ui";
 import { Avatar } from "@arco-design/web-vue";
-
-// const users = useRequest(
-//   async (...args: Parameters<typeof api.v1.selectUsers>) => {
-//     const res = await api.v1.selectUsers(...args);
-//     return res?.[0];
-//   },
-//   {
-//     initialParams: [
-//       {
-//         page: 1,
-//         size: 2,
-//       },
-//     ],
-//     initialData: {},
-//     retry: 3,
-//     // interval: 2000,
-//     onBefore(args) {
-//       // console.log("onBefore", args);
-//     },
-//   }
-// );
 
 const url = ref<any>(null);
 
 const table = useTable({
-  api: async (model, paging) => {
-    const res = await api.user.selectUsers({ ...paging, ...model });
-    console.log('dr', res);
-    return res;
+  data: async () => {
+    return [];
   },
   columns: [
     // {
@@ -82,9 +59,9 @@ const table = useTable({
     },
     {
       title: "操作",
-      type: "action",
+      type: "button",
       width: 70,
-      action: [],
+      buttons: [],
     },
   ],
   common: {
@@ -113,14 +90,13 @@ const table = useTable({
       {
         field: "password",
         label: "密码",
-        type: "inputPassword",
+        type: "password",
       },
       {
         label: "头像",
         field: "avatar",
         type: "input",
-        render: ({ model, field }) => {
-          
+        component: ({ model, field }) => {
           const onInputChange = (e: Event) => {
             const target = e.target as HTMLInputElement;
             const file = target.files?.[0];
