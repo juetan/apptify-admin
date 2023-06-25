@@ -1,0 +1,1 @@
+import{_ as t,o as c,e as s,b as e}from"./index-a2b9888c.js";const o={},n={class:"m-4 p-4 bg-white"};function a(r,_){return c(),s("div",n," Post Page ")}typeof e=="function"&&e(o);const i=t(o,[["render",a]]);export{i as default};
