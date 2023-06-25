@@ -1,6 +1,5 @@
 <template>
-  <div class="page-login w-full h-full flex items-center justify-center bg-slate-200">
-    <dvi class="bg fixed w-full h-full"></dvi>
+  <div class="page-login w-full h-full flex items-center justify-center bg-[#0af]">
     <div class="fixed flex items-center justify-between top-0 m-0 h-13 w-full px-10 z-10">
       <!-- <div class="flex items-center">
         <img src="/favicon.ico" alt="" width="20" height="20" class="mr-1" />
@@ -13,10 +12,10 @@
       <div>敬请期待</div> -->
     </div>
     <div class="relative mx:2 grid  md:grid-cols-[1fr_500px] rounded overflow-hidden w-[1020px] h-[600px] shadow">
-      <div class="relative hidden md:block w-full h-full overflow-hidden bg-gradient-to-br from-[#7af] to-[#09f] px-4">
-        <img src="@/assets/td.svg" :alt="appStore.title" class="w-full h-full" />
+      <div class="relative hidden md:block w-full h-full overflow-hidden bg-[#09f] px-4">
+        <img src="@/assets/td.svg" :alt="appStore.title" class="w-full h-full select-none" />
       </div>
-      <div class="relative p-20 px-14 bg-white shadow-sm rounded">
+      <div class="relative p-20 px-14 bg-white shadow-sm">
         <div class="text-2xl">欢迎登陆</div>
         <div class="text-base text-gray-500 mt-3">{{ meridiem }}好，欢迎登陆{{ appStore.title }}!</div>
         <a-form ref="loginForm" :model="model" layout="vertical" class="mt-8">
@@ -39,7 +38,7 @@
               <a-checkbox checked="rememberPassword">记住我</a-checkbox>
               <a-link @click="onForgetPasswordClick">忘记密码?</a-link>
             </div>
-            <a-button type="primary" html-type="submit" long class="mt-2" @click="onSubmitClick"> 立即登录 </a-button>
+            <a-button type="primary" html-type="submit" long class="mt-2" :loading="loading" @click="onSubmitClick"> 立即登录 </a-button>
             <p type="text" long class="text-gray-400 text-center m-0">暂不支持其他方式登录</p>
           </a-space>
         </a-form>
@@ -58,6 +57,7 @@ const meridiem = dayjs.localeData().meridiem(dayjs().hour(), dayjs().minute());
 const appStore = useAppStore();
 const model = reactive({ username: "", password: "" });
 const router = useRouter();
+const loading = ref(false);
 
 const onForgetPasswordClick = () => {
   Modal.info({
@@ -69,7 +69,9 @@ const onForgetPasswordClick = () => {
 };
 
 const onSubmitClick = async () => {
+  loading.value = true;
   await new Promise((resolve) => setTimeout(resolve, 2000));
+  loading.value = false;
   router.push({ path: "/" });
 };
 </script>

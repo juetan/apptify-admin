@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
   const port = Number(env.VITE_DEV_PORT || 3020);
 
   return {
-    base: ".",
+    base: "./",
     resolve: {
       alias: [
         {

@@ -50,7 +50,7 @@ pnpm dev
 | `src/pages`其他子目录或`.vue`文件为二级路由，如应用首页。
 
 左侧菜单数据，将根据上面的二级路由自动生成，如需生成层级只需在对应目录下的index.vue文件中定义如下路由配置：
-```json
+```
 <route lang="json">
 {
   "parentMeta": {
